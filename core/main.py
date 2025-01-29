@@ -2,11 +2,12 @@ import telebot
 import sqlite3
 import os
 from dotenv import load_dotenv
+from telebot import types
 
 load_dotenv()
 
 # create a database
-conn = sqlite3.connect('sqlite3.db', check_same_thread=False)
+conn = sqlite3.connect('users.db', check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS users (
@@ -15,6 +16,12 @@ CREATE TABLE IF NOT EXISTS users (
     phone TEXT,
     status TEXT, 
     rool TEXT DEFAULT 'user'
+)
+''')
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS reports (
+    userid INTEGER,
+    report TEXT
 )
 ''')
 conn.commit()
@@ -43,7 +50,7 @@ def get_last_name(message, firstname):
 
 def get_phone(message, firstname, lastname):
     phone = message.text
-    bot.send_message(message.chat.id, "  بیکار هستید یا شاغل لطفاً وضعیت خود را وارد کنید:")
+    bot.send_message(message.chat.id, "لطفاً وضعیت خود را وارد کنید:")
     bot.register_next_step_handler(message, get_role, firstname, lastname, phone)
 
 def get_role(message, firstname, lastname, phone):
@@ -61,5 +68,24 @@ def save_user(message, firstname, lastname, phone, status):
                    (firstname, lastname, phone, status, rool))
     conn.commit()
     bot.send_message(message.chat.id, "اطلاعات شما با موفقیت ذخیره شد!")
+
+@bot.message_handler(commands=['report'])
+def report(message):
+    # ایجاد دکمه برای ارسال گزارش
+    markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    markup.add('ارسال گزارش')
+    bot.send_message(message.chat.id, "برای ارسال گزارش، دکمه زیر را فشار دهید:", reply_markup=markup)
+
+@bot.message_handler(func=lambda message: message.text == 'ارسال گزارش')
+def receive_report(message):
+    bot.send_message(message.chat.id, "لطفاً متن گزارش خود را وارد کنید:")
+    bot.register_next_step_handler(message, save_report)
+
+def save_report(message):
+    report_text = message.text
+    user_id = message.from_user.id  # شناسه کاربر که باید در پایگاه داده ذخیره 
+    cursor.execute("INSERT INTO reports (userid, report) VALUES (?, ?)", (user_id, report_text))
+    conn.commit()
+    bot.send_message(message.chat.id, "گزارش شما با موفقیت ذخیره شد!")
 
 bot.polling()
