@@ -1,9 +1,14 @@
 from telebot import TeleBot
+from telebot import logger
 from dotenv import load_dotenv
 import os
+import logging
 from models import User , Rool
+
+
 load_dotenv()
 
+logger.setLevel(logging.DEBUG)
 API_KEY = os.getenv('API_KEY')
 
 bot = TeleBot(API_KEY)
