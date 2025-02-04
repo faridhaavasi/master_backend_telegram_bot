@@ -8,7 +8,7 @@ from models import User , Rool
 
 load_dotenv()
 
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 API_KEY = os.getenv('API_KEY')
 
 bot = TeleBot(API_KEY)
@@ -48,24 +48,44 @@ def set_status_work(message, first_name, last_name, phone, rool):
     bot.register_next_step_handler(message, callback=finish_register, first_name=first_name,
                                    last_name=last_name, phone=phone, rool=rool, status_work=message.text)
 
+
 def finish_register(message, first_name, last_name, phone, rool, status_work):
-    rool = Rool.create(name=rool)
-    user = User.create(first_name=first_name, last_name=last_name, phone=phone, rool=rool, 
-                       status_work=str(status_work))
+    rool, _ = Rool.get_or_create(name=rool)  # جلوگیری از ایجاد نقش‌های تکراری
+    user = User.create(
+        chat_id=message.chat.id,  # ذخیره chat_id
+        first_name=first_name,
+        last_name=last_name,
+        phone=phone,
+        rool=rool,
+        status_work=str(status_work)
+    )
     user.save()
-   
+
     bot.send_message(message.chat.id, 'ثبت نام شما با موفقیت انجام شد')
-
-
-
 @bot.message_handler(commands=['show_users'])
 def show_users(message):
-    user_id = message.chat.id
-    user = User.get(User.id == user_id)
-    if user.rools == 'مستر':
+    logger.info(f'User with chat_id {message.chat.id} requested to show users')
+
+    user = User.get_or_none(User.chat_id == message.chat.id)  
+
+    if user is None:
+        bot.send_message(message.chat.id, "❌ کاربری با این ID یافت نشد، لطفا ثبت‌نام کنید.")
+        return  # جلوگیری از اجرای ادامه‌ی تابع
+
+    if user.rool.name == 'مستر':
         users = User.select()
-        for user in users:
-            bot.send_message(message.chat.id, f'نام: {user.first_name} {user.last_name}\nشماره تماس: {user.phone}\nنقش: {user.rool.name}\nوضعیت کاری: {user.status_work}')
+        for u in users:
+            bot.send_message(
+                message.chat.id, 
+                f'👤 نام: {u.first_name}\n'
+                f'📛 نام خانوادگی: {u.last_name}\n'
+                f'📞 شماره تماس: {u.phone}\n'
+                f'🔰 نقش: {u.rool.name}\n'
+                f'💼 وضعیت کاری: {u.status_work}'
+            )
+    else:
+        bot.send_message(message.chat.id, "❌ شما مجاز به مشاهده‌ی کاربران نیستید.")
+
 
 
 

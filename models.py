@@ -8,17 +8,18 @@ class Rool(Model):
 
     class Meta:
         database = db
-
 class User(Model):
     id = PrimaryKeyField()
+    chat_id = IntegerField(unique=True)  # افزودن chat_id برای نگهداری ID تلگرام کاربر
     first_name = CharField()
     last_name = CharField()
-    phone = CharField() # This field is a string that will hold the phone number.
-    rool = ForeignKeyField(Rool, backref='rools') # This field is a foreign key that will hold the rool of the user.
-    status_work = CharField() # This field is a string that will hold the status of the user.
-    
+    phone = CharField()
+    rool = ForeignKeyField(Rool, backref='users')  # تصحیح backref
+    status_work = CharField()
+
     class Meta:
-        database = db # This model uses the "people.db" database.
+        database = db
+
 
 db.connect()
 db.create_tables([Rool, User]) # This line creates the tables in the database.        
