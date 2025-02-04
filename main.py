@@ -58,5 +58,15 @@ def finish_register(message, first_name, last_name, phone, rool, status_work):
 
 
 
+@bot.message_handler(commands=['show_users'])
+def show_users(message):
+    user_id = message.chat.id
+    user = User.get(User.id == user_id)
+    if user.rools == 'مستر':
+        users = User.select()
+        for user in users:
+            bot.send_message(message.chat.id, f'نام: {user.first_name} {user.last_name}\nشماره تماس: {user.phone}\nنقش: {user.rool.name}\nوضعیت کاری: {user.status_work}')
+
+
 
 bot.polling()
