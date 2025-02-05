@@ -140,4 +140,57 @@ def show_users(message):
     else:
         bot.send_message(chat_id, "❌ شما مجاز به مشاهده‌ی کاربران نیستید.")
 
+    @bot.message_handler(commands=['edit'])
+    def edit_user(message):
+        chat_id = message.chat.id
+        logger.info(f'User with chat_id {chat_id} requested to edit user')
+
+        user = User.get_or_none(User.chat_id == chat_id)
+
+        if user is None:
+            bot.send_message(chat_id, "❌ کاربری با این ID یافت نشد، لطفا ثبت‌نام کنید.")
+            return
+
+        if user.rool.name == 'مستر':
+            bot.send_message(chat_id, 'لطفا شماره تماس کاربر مورد نظر را وارد کنید:')
+            bot.register_next_step_handler(message, edit_user_phone)
+        else:
+            bot.send_message(chat_id, "❌ شما مجاز به ویرایش کاربران نیستید.")
+
+    def edit_user_phone(message):
+        chat_id = message.chat.id
+        phone = message.text
+
+        user = User.get_or_none(User.phone == phone)
+
+        if user is None:
+            bot.send_message(chat_id, "❌ کاربری با این شماره تماس یافت نشد.")
+            return
+
+        bot.send_message(chat_id, 'لطفا شماره تماس جدید را وارد کنید:')
+        chat_id = message.chat.id
+        chat_id['phone'] = phone
+        bot.register_next_step_handler(message, edit_user_new_phone)
+
+    def edit_user_new_phone(message):
+        chat_id = message.chat.id
+        new_phone = chat_id['phone']
+
+        user = User.get_or_none(User.phone == new_phone)
+
+        if user:
+            bot.send_message(chat_id, "❌ کاربری با این شماره تماس قبلا ثبت شده است.")
+            return
+
+        user.phone = new_phone
+        user.save()
+        del chat_id['phone']
+
+        bot.send_message(chat_id, "✅ شماره تماس با موفقیت ویرایش شد.")    
+
+
+
+
+
+
 bot.polling()
