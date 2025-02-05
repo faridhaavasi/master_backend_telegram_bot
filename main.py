@@ -11,7 +11,7 @@ logger.setLevel(logging.INFO)
 API_KEY = os.getenv('API_KEY')
 
 bot = TeleBot(API_KEY)
-# dictionary to store temporary user data
+
 user_data = {}
 
 @bot.message_handler(commands=['start'])
@@ -21,14 +21,14 @@ def start(message):
 @bot.message_handler(commands=['register'])
 def set_first_name(message):
     chat_id = message.chat.id
-    user_data[chat_id] = {}  # create a new dictionary for user data
+    user_data[chat_id] = {}  
 
     bot.send_message(chat_id, 'لطفا نام خود را وارد کنید')
     bot.register_next_step_handler(message, set_last_name)
 
 def set_last_name(message):
     chat_id = message.chat.id
-    user_data[chat_id]['first_name'] = message.text   
+    user_data[chat_id]['first_name'] = message.text  
 
     bot.send_message(chat_id, 'لطفا نام خانوادگی خود را وارد کنید')
     bot.register_next_step_handler(message, set_phone)
@@ -44,14 +44,25 @@ def set_rool(message):
     chat_id = message.chat.id
     user_data[chat_id]['phone'] = message.text  
 
-    bot.send_message(chat_id, 'لطفا نقش خود را انتخاب کنید:')
-    bot.send_message(chat_id, '1- مستر')
-    bot.send_message(chat_id, '2- عادی')
-    bot.register_next_step_handler(message, set_status_work)
+    master_exists = User.select().join(Rool).where(Rool.name == 'مستر').exists()
 
-def set_status_work(message):
+    bot.send_message(chat_id, 'لطفا نقش خود را انتخاب کنید:')
+    
+    if master_exists:
+        bot.send_message(chat_id, '❌ نقش "مستر" قبلاً ثبت شده است. لطفا نقش دیگری را انتخاب کنید.')
+    else:
+        bot.send_message(chat_id, '1- مستر')
+    
+    bot.send_message(chat_id, '2- عادی')
+    bot.register_next_step_handler(message, set_status_work, master_exists)
+
+def set_status_work(message, master_exists):
     chat_id = message.chat.id
     role_choice = message.text.strip()
+
+    if role_choice == '1' and master_exists:
+        bot.send_message(chat_id, '❌ شما نمی‌توانید به عنوان "مستر" ثبت نام کنید. لطفا مجددا /register را بزنید و نقش دیگری انتخاب کنید.')
+        return
 
     if role_choice == '1':
         user_data[chat_id]['rool'] = 'مستر'
@@ -98,8 +109,10 @@ def finish_register(message):
     )
     user.save()
 
+    # ارسال پیام موفقیت
     bot.send_message(chat_id, '✅ ثبت نام شما با موفقیت انجام شد!')
 
+    # پاک کردن اطلاعات موقت از دیکشنری
     del user_data[chat_id]
 
 @bot.message_handler(commands=['show_users'])
