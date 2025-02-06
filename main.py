@@ -3,7 +3,8 @@ from telebot import logger
 from dotenv import load_dotenv
 import os
 import logging
-from models import User, Rool
+import datetime
+from models import User, Rool, Report
 
 load_dotenv()
 
@@ -195,7 +196,33 @@ def show_users(message):
 
 @bot.message_handler(commands=['send_report'])
 def send_report(message):
-    pass
+    chat_id = message.chat.id
+    is_master = User.select().join(Rool).where(Rool.name == 'مستر', User.chat_id == chat_id).exists()
+    if is_master:
+        bot.send_message(chat_id, 'شما نیاز به ارسال گزارش ندارید.')
+        return 
+    else:
+        bot.send_message(chat_id, 'لطفا متن گزارش خود را وارد کنید:')
+        bot.register_next_step_handler(message, save_report)
+
+def save_report(message):
+    chat_id = message.chat.id
+    text = message.text
+
+    user = User.get_or_none(User.chat_id == chat_id)
+
+    if user is None:
+        bot.send_message(chat_id, "❌ کاربری با این ID یافت نشد، لطفا ثبت‌نام کنید.")
+        return
+
+    report = Report.create(
+        user=user,
+        dat = datetime.now(),
+        text=text
+    )
+    report.save()
+
+    bot.send_message(chat_id, '✅ گزارش شما با موفقیت ثبت شد!')
 
 
 bot.polling()
