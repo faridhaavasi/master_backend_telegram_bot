@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import os
 import logging
 import datetime
+
 from models import User, Rool, Report
 
 load_dotenv()
@@ -217,7 +218,7 @@ def save_report(message):
 
     report = Report.create(
         user=user,
-        dat = datetime.now(),
+        date = datetime.datetime.now(),
         text=text
     )
     report.save()
