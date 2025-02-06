@@ -193,4 +193,9 @@ def show_users(message):
 
 
 
+@bot.message_handler(commands=['send_report'])
+def send_report(message):
+    pass
+
+
 bot.polling()
