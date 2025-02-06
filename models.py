@@ -10,15 +10,27 @@ class Rool(Model):
         database = db
 class User(Model):
     id = PrimaryKeyField()
-    chat_id = IntegerField(unique=True)  # افزودن chat_id برای نگهداری ID تلگرام کاربر
+    chat_id = IntegerField(unique=True) # This line creates a unique field for each user.
     first_name = CharField()
     last_name = CharField()
     phone = CharField()
-    rool = ForeignKeyField(Rool, backref='users')  # تصحیح backref
+    rool = ForeignKeyField(Rool, backref='users') 
     status_work = CharField()
 
     class Meta:
         database = db
+
+
+
+class Report(Model):
+    id = PrimaryKeyField()
+    user = ForeignKeyField(User, backref='reports')
+    date = DateTimeField()
+    text = TextField()
+
+    class Meta:
+        database = db
+
 
 
 db.connect()
