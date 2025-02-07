@@ -276,5 +276,34 @@ def set_new_report(message):
     bot.send_message(chat_id, '✅ گزارش با موفقیت ویرایش شد.')
     del user_data[chat_id]
 
+@bot.message_handler(commands=['delete_report'])
+def delete_report(message):
+    bot.send_message(message.chat.id, 'لطفا تاریخ گزارش مورد نظر را وارد کنید:')
+    bot.register_next_step_handler(message, set_delete_report)    
 
+def set_delete_report(message):
+    chat_id = message.chat.id
+    date = message.text
+
+    report = Report.get_or_none(Report.date == date)
+
+    if report is None:
+        bot.send_message(chat_id, "❌ گزارشی با این تاریخ یافت نشد.")
+        return
+
+    report.delete_instance()
+    bot.send_message(chat_id, '✅ گزارش با موفقیت حذف شد.')
+
+@bot.message_handler(commands=['help'])
+def help(message):
+    bot.send_message(message.chat.id, 'راهنمای دستورات:\n'
+                                     '/start - شروع\n'
+                                     '/register - ثبت‌نام\n'
+                                     '/show_users -  فقط مستر اجازه دارد نمایش کاربران\n'
+                                     '/edit - ویرایش کاربر\n'
+                                     '/send_report - ارسال گزارش\n'
+                                     '/show_reports - نمایش گزارش‌ها\n'
+                                     '/edit_report - ویرایش گزارش\n'
+                                     '/delete_report - حذف گزارش\n'
+                                     '/help - راهنما')
 bot.polling()
