@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 import os
 import logging
 import datetime
-
 from models import User, Rool, Report
 
 load_dotenv()
@@ -19,6 +18,8 @@ user_data = {}
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, 'خوش آمدید لطفا /register را بزنید')
+    bot.send_message(message.chat.id, 'برای مشاهده دستورات /help را بزنید')
+
 
 @bot.message_handler(commands=['register'])
 def set_first_name(message):
@@ -306,4 +307,5 @@ def help(message):
                                      '/edit_report - ویرایش گزارش\n'
                                      '/delete_report - حذف گزارش\n'
                                      '/help - راهنما')
+
 bot.polling()
