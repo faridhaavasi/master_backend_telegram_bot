@@ -225,5 +225,22 @@ def save_report(message):
 
     bot.send_message(chat_id, '✅ گزارش شما با موفقیت ثبت شد!')
 
+@bot.message_handler(commands=['show_reports'])
+def show_reports(message):
+    chat_id = message.chat.id
+    is_user_report = User.select().join(Report).where(User.chat_id == chat_id).exists()
+
+    if is_user_report:
+        reports = Report.select()
+        for r in reports:
+            bot.send_message(
+                chat_id, 
+                f'👤 نام: {r.user.first_name} {r.user.last_name}\n'
+                f'📅 تاریخ: {r.date}\n'
+                f'📄 متن گزارش: {r.text}'
+            )
+    else:
+        bot.send_message(chat_id, "❌ شما مجاز به مشاهده‌ی گزارش‌ها نیستید.")
+
 
 bot.polling()
