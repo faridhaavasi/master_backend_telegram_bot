@@ -34,4 +34,4 @@ class Report(Model):
 
 
 db.connect()
-db.create_tables([Rool, User]) # This line creates the tables in the database.        
+db.create_tables([Rool, User, Report]) # This line creates the tables in the database.        
