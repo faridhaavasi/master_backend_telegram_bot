@@ -243,4 +243,38 @@ def show_reports(message):
         bot.send_message(chat_id, "❌ شما مجاز به مشاهده‌ی گزارش‌ها نیستید.")
 
 
+@bot.message_handler(commands=['edit_report'])
+def edit_report(message):
+    bot.send_message(message.chat.id, 'لطفا تاریخ گزارش مورد نظر را وارد کنید:')
+    bot.register_next_step_handler(message, set_edit_report)
+
+def set_edit_report(message):
+    chat_id = message.chat.id
+    date = message.text
+
+    report = Report.get_or_none(Report.date == date)
+
+    if report is None:
+        bot.send_message(chat_id, "❌ گزارشی با این تاریخ یافت نشد.")
+        return
+
+    bot.send_message(chat_id, 'لطفا متن جدید گزارش را وارد کنید:')
+    user_data[chat_id] = {}
+    user_data[chat_id]['date'] = date
+    bot.register_next_step_handler(message, set_new_report)
+
+def set_new_report(message):
+    chat_id = message.chat.id
+    text = message.text
+
+    date = user_data[chat_id]['date']
+
+    report = Report.get(Report.date == date)
+    report.text = text
+    report.save()
+
+    bot.send_message(chat_id, '✅ گزارش با موفقیت ویرایش شد.')
+    del user_data[chat_id]
+
+
 bot.polling()
