@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 import os
 import logging
 import datetime
-from models import User, Rool, Report
-
+from models import User, Rool, Report, ChatUser
+from tasls import app
 load_dotenv()
 
 logger.setLevel(logging.INFO)
@@ -17,6 +17,8 @@ user_data = {}
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    chat_id = message.chat.id
+    ChatUser.get_or_create(chat_id=chat_id)
     bot.send_message(message.chat.id, 'خوش آمدید لطفا /register را بزنید')
     bot.send_message(message.chat.id, 'برای مشاهده دستورات /help را بزنید')
 
@@ -278,5 +280,10 @@ def help(message):
                                      '/delete_report - حذف گزارش\n'
                                         '/delete_user - حذف کاربر فقط مستر اجازه دارد\n'
                                      '/help - راهنما')
+@bot.message_handler(commands=['alert'])
+def send_alert(message):
+    chat_id = message.chat.id
+    send_alert_task.delay(chat_id)  # اجرای تسک به‌صورت غیربلاک‌کننده در Celery
+    bot.send_message(chat_id, '✅ پیام هشدار به صف پردازش Celery اضافه شد.')
 
 bot.polling()
