@@ -4,7 +4,6 @@ import os
 import logging
 import datetime
 from models import User, Rool, Report, ChatUser
-from tasks import send_alert_task
 
 load_dotenv()
 
