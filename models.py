@@ -31,7 +31,12 @@ class Report(Model):
     class Meta:
         database = db
 
+class ChatUser(Model):
+    chat_id = IntegerField(unique=True)
 
+    class Meta:
+        database = db
 
 db.connect()
-db.create_tables([Rool, User, Report]) # This line creates the tables in the database.        
+db.create_tables([Rool, User, Report, ChatUser])
+   
