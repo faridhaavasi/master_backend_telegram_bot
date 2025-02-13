@@ -7,4 +7,4 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=9, minute=0), 
     },
 }
-app.conf.timezone = "Asia/Tehran"  # تنظیم منطقه زمانی ایران
+app.conf.timezone = "Asia/Tehran"  
