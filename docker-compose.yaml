@@ -1,0 +1,5 @@
+
+
+ celery-beat:
+    build: .
+    command: celery -A tasks beat --loglevel=info
