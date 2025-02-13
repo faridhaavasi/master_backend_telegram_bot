@@ -18,8 +18,7 @@ user_data = {}
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, 'خوش آمدید لطفا /register را بزنید')
-
+    bot.send_message(message.chat.id, ' خوش آمدید لطفا /register را بزنید   و برای راهنمایی /help'  )
 @bot.message_handler(commands=['register'])
 def set_first_name(message):
     chat_id = message.chat.id
@@ -176,13 +175,9 @@ def show_users(message):
 
     def edit_user_new_phone(message):
         chat_id = message.chat.id
-        new_phone = chat_id['phone']
+        new_phone = message.txt
 
         user = User.get_or_none(User.phone == new_phone)
-
-        if user:
-            bot.send_message(chat_id, "❌ کاربری با این شماره تماس قبلا ثبت شده است.")
-            return
 
         user.phone = new_phone
         user.save()
@@ -227,6 +222,17 @@ def save_report(message):
 
 @bot.message_handler(commands=['show_reports'])
 def show_reports(message):
+    is_master = User.select().join(Rool).where(User.chat_id == chat_id, User.rool=='مستر').exists()
+    if is_master:
+        reports = Report.select()
+        for r in reports:
+            bot.send_message(
+                chat_id, 
+                f'👤 نام: {r.user.first_name} {r.user.last_name}\n'
+                f'📅 تاریخ: {r.date}\n'
+                f'📄 متن گزارش: {r.text}'
+            )
+
     chat_id = message.chat.id
     is_user_report = User.select().join(Report).where(User.chat_id == chat_id).exists()
 
