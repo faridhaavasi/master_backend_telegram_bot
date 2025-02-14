@@ -158,71 +158,42 @@ def show_users(message):
         else:
             bot.send_message(chat_id, "❌ شما مجاز به ویرایش کاربران نیستید.")
 
-    def edit_user_phone(message):
-        chat_id = message.chat.id
-        phone = message.text
-
-        user = User.get_or_none(User.phone == phone)
-
-        if user is None:
-            bot.send_message(chat_id, "❌ کاربری با این شماره تماس یافت نشد.")
-            return
-
-        bot.send_message(chat_id, 'لطفا شماره تماس جدید را وارد کنید:')
-        chat_id = message.chat.id
-        chat_id['phone'] = phone
-        bot.register_next_step_handler(message, edit_user_new_phone)
-
-    def edit_user_new_phone(message):
-        chat_id = message.chat.id
-        new_phone = message.txt
-
-        user = User.get_or_none(User.phone == new_phone)
-
-        user.phone = new_phone
-        user.save()
-        del chat_id['phone']
-
-        bot.send_message(chat_id, "✅ شماره تماس با موفقیت ویرایش شد.")    
-
-
-
-
-
-
-@bot.message_handler(commands=['send_report'])
-def send_report(message):
+def edit_user_phone(message):
     chat_id = message.chat.id
-    is_master = User.select().join(Rool).where(Rool.name == 'مستر', User.chat_id == chat_id).exists()
-    if is_master:
-        bot.send_message(chat_id, 'شما نیاز به ارسال گزارش ندارید.')
-        return 
-    else:
-        bot.send_message(chat_id, 'لطفا متن گزارش خود را وارد کنید:')
-        bot.register_next_step_handler(message, save_report)
+    phone = message.text
 
-def save_report(message):
-    chat_id = message.chat.id
-    text = message.text
-
-    user = User.get_or_none(User.chat_id == chat_id)
+    user = User.get_or_none(User.phone == phone)
 
     if user is None:
-        bot.send_message(chat_id, "❌ کاربری با این ID یافت نشد، لطفا ثبت‌نام کنید.")
+        bot.send_message(chat_id, "❌ کاربری با این شماره تماس یافت نشد.")
         return
 
-    report = Report.create(
-        user=user,
-        date = datetime.datetime.now(),
-        text=text
-    )
-    report.save()
+    bot.send_message(chat_id, 'لطفا شماره تماس جدید را وارد کنید:')
+    user_data[chat_id] = {}
+    user_data[chat_id]['phone'] = phone
+    bot.register_next_step_handler(message, edit_user_new_phone)
 
-    bot.send_message(chat_id, '✅ گزارش شما با موفقیت ثبت شد!')
+def edit_user_new_phone(message):
+    chat_id = message.chat.id
+    new_phone = message.text
+
+    user = User.get_or_none(User.phone == user_data[chat_id]['phone'])
+
+    if user is None:
+        bot.send_message(chat_id, "❌ کاربری با این شماره تماس یافت نشد.")
+        return
+
+    user.phone = new_phone
+    user.save()
+    del user_data[chat_id]
+
+    bot.send_message(chat_id, "✅ شماره تماس با موفقیت ویرایش شد.")
 
 @bot.message_handler(commands=['show_reports'])
 def show_reports(message):
-    is_master = User.select().join(Rool).where(User.chat_id == chat_id, User.rool=='مستر').exists()
+    chat_id = message.chat.id
+    is_master = User.select().join(Rool).where(User.chat_id == chat_id, Rool.name == 'مستر').exists()
+
     if is_master:
         reports = Report.select()
         for r in reports:
@@ -232,21 +203,20 @@ def show_reports(message):
                 f'📅 تاریخ: {r.date}\n'
                 f'📄 متن گزارش: {r.text}'
             )
-
-    chat_id = message.chat.id
-    is_user_report = User.select().join(Report).where(User.chat_id == chat_id).exists()
-
-    if is_user_report:
-        reports = Report.select()
-        for r in reports:
-            bot.send_message(
-                chat_id, 
-                f'👤 نام: {r.user.first_name} {r.user.last_name}\n'
-                f'📅 تاریخ: {r.date}\n'
-                f'📄 متن گزارش: {r.text}'
-            )
     else:
-        bot.send_message(chat_id, "❌ شما مجاز به مشاهده‌ی گزارش‌ها نیستید.")
+        is_user_report = User.select().join(Report).where(User.chat_id == chat_id).exists()
+
+        if is_user_report:
+            reports = Report.select().where(Report.user == User.get(User.chat_id == chat_id))
+            for r in reports:
+                bot.send_message(
+                    chat_id, 
+                    f'👤 نام: {r.user.first_name} {r.user.last_name}\n'
+                    f'📅 تاریخ: {r.date}\n'
+                    f'📄 متن گزارش: {r.text}'
+                )
+        else:
+            bot.send_message(chat_id, "❌ شما مجاز به مشاهده‌ی گزارش‌ها نیستید.")
 
 
 @bot.message_handler(commands=['edit_report'])
