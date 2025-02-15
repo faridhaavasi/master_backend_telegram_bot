@@ -172,6 +172,27 @@ def show_reports(message):
         bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
 
 
+@bot.message_handler(commands=["show_reports_for_master"])
+def show_reports_for_master(message):
+    try:
+        user = User.get(User.chat_id == message.chat.id)  
+        if user.rool.name == "مستر":  
+            reports = Report.select()
+            
+            if reports:
+                response = "\n\n".join([
+                    f"👤 کاربر: {report.user.first_name} {report.user.last_name}\n📅 تاریخ: {report.date}\n📝 گزارش: {report.text}"
+                    for report in reports
+                ])
+            else:
+                response = "⛔ هیچ گزارشی ثبت نشده است."
+            
+            bot.send_message(message.chat.id, response)
+        else:
+            bot.send_message(message.chat.id, "⛔ شما دسترسی مشاهده گزارش‌ها را ندارید.")
+
+    except User.DoesNotExist:
+        bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
 
 
 
