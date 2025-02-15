@@ -114,7 +114,7 @@ def finish_register(message):
 
     del user_data[chat_id]
 
-@bot.message_handler(commands=['show_users'])
+@bot.message_handler(commands=['show_user_profile'])
 def show_users(message):
     chat_id = message.chat.id
     logger.info(f'User with chat_id {chat_id} requested to show users')
@@ -138,6 +138,102 @@ def show_users(message):
             )
     else:
         bot.send_message(chat_id, "❌ شما مجاز به مشاهده‌ی کاربران نیستید.")
+
+@bot.message_handler(commands=["show_users"])
+def show_users(message):
+    try:
+        user = User.get(User.chat_id == message.chat.id)   
+
+        if user.rool.name == "مستر":  
+            users = User.select()
+            
+            if users:
+                response = "\n\n".join([
+                    f"👤 نام: {u.first_name} {u.last_name}\n📞 تلفن: {u.phone}\n🔄 وضعیت کاری: {u.status_work}"
+                    for u in users
+                ])
+            else:
+                response = "⛔ هیچ کاربری در سیستم ثبت نشده است."
+            
+            bot.send_message(message.chat.id, response)
+        else:
+            bot.send_message(message.chat.id, "⛔ شما دسترسی مشاهده کاربران را ندارید.")
+
+    except User.DoesNotExist:
+        bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
+
+
+
+@bot.message_handler(commands=["edit_user_phone"])
+def start_edit_user(message):
+    bot.send_message(message.chat.id, "📞 لطفا تلفن جدید خود را وارد کنید:")
+    bot.register_next_step_handler(message, set_update_user)
+
+def set_update_user(message):
+    phone_set = message.text  
+    
+    user = User.get_or_none(User.chat_id == message.chat.id)  
+    
+    if user:
+        user.phone = phone_set  
+        user.save()  
+        bot.send_message(message.chat.id, "✅ شماره تلفن شما با موفقیت به‌روزرسانی شد.")
+    else:
+        bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
+
+
+@bot.message_handler(commands=["edit_first_name"])
+def start_edit_first_name(message):
+    bot.send_message(message.chat.id, "✏ لطفا نام جدید خود را وارد کنید:")
+    bot.register_next_step_handler(message, set_update_first_name)
+
+def set_update_first_name(message):
+    user = User.get_or_none(User.chat_id == message.chat.id)
+    
+    if user:
+        user.first_name = message.text   
+        user.save()
+        bot.send_message(message.chat.id, "✅ نام شما با موفقیت به‌روزرسانی شد.")
+    else:
+        bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
+
+
+@bot.message_handler(commands=["edit_last_name"])
+def start_edit_last_name(message):
+    bot.send_message(message.chat.id, "✏ لطفا نام خانوادگی جدید خود را وارد کنید:")
+    bot.register_next_step_handler(message, set_update_last_name)
+
+def set_update_last_name(message):
+    user = User.get_or_none(User.chat_id == message.chat.id)
+    
+    if user:
+        user.last_name = message.text  
+        user.save()
+        bot.send_message(message.chat.id, "✅ نام خانوادگی شما با موفقیت به‌روزرسانی شد.")
+    else:
+        bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
+
+
+@bot.message_handler(commands=["edit_status_work"])
+def start_edit_status_work(message):
+    bot.send_message(message.chat.id, "🔄 لطفا وضعیت کاری جدید خود را وارد کنید:")
+    bot.register_next_step_handler(message, set_update_status_work)
+
+def set_update_status_work(message):
+    user = User.get_or_none(User.chat_id == message.chat.id)
+    
+    if user:
+        user.status_work = message.text 
+        user.save()
+        bot.send_message(message.chat.id, "✅ وضعیت کاری شما با موفقیت به‌روزرسانی شد.")
+    else:
+        bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
+
+
+
+
+
+
 @bot.message_handler(commands=["send_report"])
 def send_reprt_start(message):
     text_report = message.text  
@@ -193,6 +289,32 @@ def show_reports_for_master(message):
 
     except User.DoesNotExist:
         bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
+
+@bot.message_handler(commands=["help"])
+def help_command(message):
+    help_text = """
+📌 **راهنمای ربات مدیریت کاربران و گزارشات** 📌
+
+✅ **دستورات ثبت‌نام و ویرایش اطلاعات** ✅
+➖ `/register` → ثبت‌نام کاربر جدید  
+➖ `/edit_user_phone` → ویرایش شماره تلفن  
+➖ `/edit_first_name` → ویرایش نام  
+➖ `/edit_last_name` → ویرایش نام خانوادگی  
+➖ `/edit_status_work` → ویرایش وضعیت کاری  
+
+✅ **دستورات مربوط به کاربران** ✅
+➖ `/show_user_profile` → مشاهده اطلاعات خود  
+➖ `/show_users` → (فقط برای مستر) نمایش لیست تمام کاربران  
+
+✅ **دستورات ثبت و نمایش گزارشات** ✅
+➖ `/send_report` → ارسال گزارش جدید  
+➖ `/show_reports` → مشاهده گزارش‌های خود  
+➖ `/show_reports_for_master` → (فقط برای مستر) مشاهده تمام گزارش‌ها  
+
+❓ **سوالات بیشتر دارید؟**  
+با ارسال `/help` دوباره، این راهنما را مشاهده کنید. 😊
+"""
+    bot.send_message(message.chat.id, help_text)
 
 
 
