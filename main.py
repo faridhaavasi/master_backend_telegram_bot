@@ -3,7 +3,7 @@ from telebot import logger
 from dotenv import load_dotenv
 import os
 import logging
-import datetime
+from datetime import datetime
 
 from models import User, Rool, Report
 
@@ -138,5 +138,20 @@ def show_users(message):
             )
     else:
         bot.send_message(chat_id, "❌ شما مجاز به مشاهده‌ی کاربران نیستید.")
+@bot.message_handler(commands=["send_report"])
+def send_reprt_start(message):
+    text_report = message.text  
+    bot.send_message(message.chat.id, "لطفا متن گزارش خود را بفرستید")  
+    bot.register_next_step_handler(message, send_report_finall, text_report)
 
-bot.poling()
+def send_report_finall(message, text_report):
+    user = User.get(chat_id=message.chat.id)  
+    report = Report.create(
+        user=user,
+        date=datetime.now(),
+        text=message.text  
+    )
+    report.save()
+    bot.send_message(message.chat.id, "دریافت شد")
+
+bot.polling()
