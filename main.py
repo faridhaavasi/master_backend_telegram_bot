@@ -154,4 +154,26 @@ def send_report_finall(message, text_report):
     report.save()
     bot.send_message(message.chat.id, "دریافت شد")
 
+
+@bot.message_handler(commands=["show_reports"])
+def show_reports(message):
+    try:
+        user = User.get(User.chat_id == message.chat.id)  
+        reports = Report.select().where(Report.user == user)   
+        
+        if reports:
+            response = "\n\n".join([f"📅 تاریخ: {r.date}\n📝 متن گزارش: {r.text}" for r in reports])
+        else:
+            response = "⛔ شما هیچ گزارشی ثبت نکرده‌اید."
+        
+        bot.send_message(message.chat.id, response)
+    
+    except User.DoesNotExist:
+        bot.send_message(message.chat.id, "⛔ شما هنوز در سیستم ثبت نشده‌اید!")
+
+
+
+
+
+
 bot.polling()
