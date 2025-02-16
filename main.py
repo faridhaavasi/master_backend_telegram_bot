@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 import os
 import logging
 from datetime import datetime
-
+from apscheduler.schedulers.background import BackgroundScheduler
+import time
 from models import User, Rool, Report
 
 load_dotenv()
@@ -316,6 +317,15 @@ def help_command(message):
 """
     bot.send_message(message.chat.id, help_text)
 
+
+def send_nightly_report_reminder():
+    users = User.select().where(User.status_work == "بیکار")
+    for user in users:
+        bot.send_message(user.chat_id, "🔔 لطفاً گزارش روزانه خود را ارسال کنید: /send_report")
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(send_nightly_report_reminder, 'cron', hour=21, minute=0) 
+scheduler.start()
 
 
 
